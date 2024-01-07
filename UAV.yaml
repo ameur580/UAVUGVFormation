@@ -1,0 +1,19 @@
+UAV:
+  identifier: "CF2.1"
+  name: "Crazyflie 2.1"
+  uri: "https://www.bitcraze.io/crazyflie-2/"
+  type: "aerial"
+  model: "Crazyflie 2.1"
+  initialPosition:
+  capabilities:
+    - Radio
+    - WIFI
+    - Bluetooth
+    - Gyroscope
+    - Accelerometer
+    - Altimeter
+    - Magnetic_sensor
+    - LED
+    - camera
+    - Ultrasound_distance_sensor
+  battery_level: 80
