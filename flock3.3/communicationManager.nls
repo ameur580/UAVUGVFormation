@@ -1,0 +1,144 @@
+globals [
+ message-id 
+]
+
+to send-token
+  display-token (word flock-id " sending the message ======>  ") 
+  forward-token
+  let val  message-analysis ([task-data] of my-token)
+  
+end
+
+to display-token[txt]
+    show( word txt "  from : "  [msg-from] of my-token  "  initiatedby :" [task-initiator] of my-token  "  message: " [msg] of my-token)
+end
+
+to forward-token
+  let tkn-aux my-token  
+  let my-id  flock-id
+  if (nb-messages > 0 )[ set tkn-aux [my-token] of myself  ]
+  ask flock-mates [
+    set my-id flock-id
+    if ((my-id != [task-initiator] of tkn-aux) and (received-message-id != [msg-id] of tkn-aux) and (nb-messages < (2 * tot-flocks))) [
+      get-token-copy tkn-aux
+      set received-message-id [msg-id] of my-token 
+      ask my-token [ set msg-from [flock-id] of myself ]
+      let val message-analysis ([task-data] of my-token)
+      if (val = 1)[
+        set nb-messages nb-messages + 1
+        forward-token
+      ]
+    ]
+  ]
+
+end
+
+to compose-token[ message list-data]
+  ask my-token[
+    set msg message
+    set task-initiator [flock-id] of myself
+    set msg-from myself
+    set msg-id message-id
+    set task-data list-data  
+  ]
+  set received-message-id message-id
+  set message-id message-id + 1
+end
+
+to broadcast-token [mg data-lst]
+  compose-token mg data-lst
+  send-token
+end
+
+;;=================================================================================================================
+
+to get-token-copy [tk]
+  ask my-token [
+        set msg [msg] of tk
+        set task-initiator [task-initiator] of tk
+        set msg-from [msg-from] of tk 
+        set msg-id [msg-id] of tk
+        set task-data [task-data] of tk
+  ]
+end
+
+to create-all-tokens
+  create-tokens ceiling tot-flocks  [
+    set msg ""
+    set task-initiator -1
+    set msg-from -1
+    set task-data []
+  ]
+end
+
+to link-token-to-flock
+  let minId  min [who] of tokens
+  foreach sort-on [flock-id] flocks [
+    the-flock -> ask the-flock [
+      set my-token token minId
+      set minId minId + 1
+    ]
+  ]
+end
+
+to display-mates
+  foreach sort-on [flock-id] flocks [
+    the-flock -> ask the-flock [
+      show (word " " who "          my mates are:" )
+      ask flock-mates [
+        show (word " I am the mate of " [flock-id] of myself)
+      ]
+    ]
+  ]  
+end
+
+to-report message-analysis[ msg-content]
+  let task-type item 0 msg-content
+  (ifelse 
+    task-type = 1 [ moving-to]
+    task-type = 2 [ forming-circle]
+    task-type = 3 [ shrinking-circle]
+    task-type = 4 [ forming-rectangle]
+    task-type = 5 [ forming-line ]
+    task-type = 6 [ report check-private-msg ]    
+    task-type = 7 [ collaborate-obstacle-ovoidance ]    
+    task-type = 8 [ msg-to-subgroup ]                        ;; need help
+    task-type = 9 [start-formation-deviation-process]  
+    task-type = 10 [end-formation-deviation-process]  
+  )
+  report 1
+end
+
+to-report check-private-msg
+  let myId flock-id
+  let z[]
+  ask my-token [
+    set z filter [ i -> i = myId ] task-data
+  ]
+  if (any? z) [
+    show "the message is received and I will process the task"  
+    report 0
+  ]
+  report 1
+end
+
+
+to msg-to-subgroup
+  let myId flock-id        ;; just to assign value
+  let z []
+  ask my-token [
+    set z filter [ i -> i = myId ] (item 1 task-data)                        ;; contains id of all mates
+  ]
+  if (length z > 0) [
+    set color green
+    show "the message is received and I will process the task"
+    reply-for-help 
+  ]
+end
+
+
+
+to subgroup-task
+  show "I will do my part of the task"
+  
+end

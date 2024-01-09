@@ -1,0 +1,126 @@
+
+to mission2                                       ;; creating the steps of the mission here we have 7 steps
+  set mission-list []
+  set mission-list insert-item 0  mission-list  (OriginX + radius / 3)    ;; tx1                   move
+  set mission-list insert-item 1  mission-list  (max-pycor - OriginY)     ;; ty1
+  
+  set mission-list insert-item 2  mission-list (max-pxcor - OriginX + (radius / 3))      ;; tx2   circle
+  set mission-list insert-item 3  mission-list (max-pycor - OriginY)      ;; ty2
+  
+  set mission-list insert-item 4  mission-list (max-pxcor - OriginX + (radius / 3))      ;; tx3    rectangle
+  set mission-list insert-item 5  mission-list (max-pycor - OriginY)      ;; ty3
+  
+  set mission-list insert-item 6  mission-list (OriginX)                  ;; tx4          ;;   move   
+  set mission-list insert-item 7  mission-list (OriginY)                  ;; ty4 
+  
+  set mission-list insert-item 8  mission-list (Max-pxcor - OriginX)      ;; tx5          ;; circle
+  set mission-list insert-item 9  mission-list (OriginY)                  ;; ty5
+  
+  set mission-list insert-item 10  mission-list (Max-pxcor - OriginX)     ;; tx6         ;;  shrinked circle same coordinate as previous
+  set mission-list insert-item 11  mission-list (OriginY)                 ;; ty6
+  
+  set mission-list insert-item 12  mission-list (OriginX - 20)            ;; tx7         ;; move
+  set mission-list insert-item 13  mission-list (OriginY - 20)            ;; ty7
+    
+  set mission-list insert-item 14  mission-list (OriginX - 65)            ;; tx8         ;; final target
+  set mission-list insert-item 15  mission-list (OriginY - 65)            ;; ty8
+
+end
+
+to mission                                       ;; creating the steps of the mission here we have 5 moves
+  set mission-list []
+  set mission-list insert-item 0  mission-list  107    ;; tx1  move
+  set mission-list insert-item 1  mission-list  20     ;; ty1
+
+  set mission-list insert-item 2  mission-list  107    ;; tx1   formation    circle
+  set mission-list insert-item 3  mission-list  20     ;; ty1
+  
+  set mission-list insert-item 4  mission-list 35      ;; tx2   move
+  set mission-list insert-item 5  mission-list 20      ;; ty2
+  
+  set mission-list insert-item 6  mission-list 35      ;; tx2   formation   rectangle
+  set mission-list insert-item 7  mission-list 20      ;; ty2
+
+  set mission-list insert-item 8  mission-list 35      ;; tx3    move
+  set mission-list insert-item 9  mission-list 60      ;; ty3
+  
+  set mission-list insert-item 10  mission-list 35      ;; tx3    formation  line
+  set mission-list insert-item 11  mission-list 60      ;; ty3
+
+  set mission-list insert-item 12  mission-list 40      ;; tx4     move
+  set mission-list insert-item 13  mission-list 80      ;; ty4 
+  
+  set mission-list insert-item 14  mission-list 70      ;; tx4     formation
+  set mission-list insert-item 15  mission-list 60      ;; ty4 
+
+  set mission-list insert-item 16  mission-list 80      ;; tx4     move
+  set mission-list insert-item 17  mission-list 70      ;; ty4 
+end
+
+
+;;=========================================================================================================
+;;=========================================================================================================
+
+to run-mission [i]                                   ;; select the mission i and run it
+  let tx item (2 * (i - 1)) mission-list               ;;  destination coordinates of the mission 'i'   extracting x coordinates
+  let ty item (2 * (i - 1) + 1) mission-list          ;;  extracting y coordinates of the destination
+  let mission-content []
+  set nb-messages 0
+  show i
+  (ifelse 
+    i = 2 [                                                         ;; task number 2
+      ask one-of flocks [
+        set mission-content insert-item 0  mission-content 4                ;;  heading message 4 means rectangle
+        set mission-content insert-item 1  mission-content originX 
+        set mission-content insert-item 2  mission-content originY
+        set mission-content insert-item 3  mission-content radius 
+        set mission-content insert-item 4  mission-content (radius / 2)
+        broadcast-token (word " let us form a rectangle " )  mission-content
+      ]
+    ]
+    i = 4 [                                                         ;; task number 4
+      ask one-of flocks [
+        set mission-content insert-item 0  mission-content 2                ;;  heading message 2 means circle
+        set mission-content insert-item 1  mission-content originX 
+        set mission-content insert-item 2  mission-content originY
+        set mission-content insert-item 3  mission-content radius 
+        set mission-content insert-item 4  mission-content (radius / 2) 
+        broadcast-token  (word " let us form a circle " )  mission-content
+      ]
+    ]
+    i = 68 [                                                          ;; task number 77
+      let delta-shrink radius / 2
+      ask one-of flocks [
+        set mission-content insert-item 0  mission-content 3                 ;;  heading message 3 means shrinked circle
+        set mission-content insert-item 1  mission-content originX 
+        set mission-content insert-item 2  mission-content originY
+        set mission-content insert-item 3  mission-content radius
+        set mission-content insert-item 4  mission-content delta-shrink
+        broadcast-token (word " let us be in line " (radius - delta-shrink) )  mission-content
+      ]
+    ]
+    i = 6 [                                                          ;; task number 5
+      ask one-of flocks [
+        set mission-content insert-item 0  mission-content 4                 ;;  heading message 5 means inline position
+        set mission-content insert-item 1  mission-content originX 
+        set mission-content insert-item 2  mission-content originY
+        set mission-content insert-item 3  mission-content radius
+        set mission-content insert-item 4  mission-content tx
+        set mission-content insert-item 5  mission-content ty
+        broadcast-token (word " let us be in line from (" originX " , " originY ") to (" tx " , " ty ")")  mission-content
+      ]
+    ]
+    [                                                                ;; else moving to tx ty  from oroginX originY
+      ask one-of flocks [                         
+        set mission-content insert-item 0  mission-content 1                 ;;  heading message 1 means  translation or move to 
+        set mission-content insert-item 1  mission-content originX 
+        set mission-content insert-item 2  mission-content originY
+        set mission-content insert-item 3  mission-content tx 
+        set mission-content insert-item 4  mission-content ty 
+        broadcast-token (word " let us make a move to " tx " , " ty) mission-content
+      ]
+      set originX tx
+      set originY ty
+    ])
+  
+end

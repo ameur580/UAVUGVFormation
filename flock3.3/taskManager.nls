@@ -1,0 +1,289 @@
+
+to moving-to 
+  let ux 0
+  let uy 0
+  let cx 0
+  let cy 0
+  ask my-token[
+    set cx item 1 task-data               ;;  x coordinates of the initiator of the message
+    set cy item 2 task-data               ;;  y coordinates of the initiator of the message
+    set ux item 3 task-data               ;;  x coordinates of the target
+    set uy item 4 task-data               ;;  y coordinates of the target
+  ]
+  ask my-destination [
+    set to-xpos to-xpos + (ux - cx)
+    set to-ypos to-ypos + (uy - cy)
+    set xcor to-xpos
+    set ycor to-ypos
+    set dest-arrived false
+    set color red
+     set hidden? true
+ ]
+  face my-destination
+  set new-heading heading
+  set arrived false
+  set reached-vn 0  
+  set free-move false
+end
+
+
+to forming-circle 
+  let cx 0
+  let cy 0
+  let radius-aux 0
+  ask my-token[
+    set cx item 1 task-data               ;;  x coordinates of the initiator of the message
+    set cy item 2 task-data               ;;  y coordinates of the initiator of the message
+    set radius-aux item 3 task-data       ;;  radius of the target circle
+  ]
+  let theta 2 * 180 /  tot-flocks
+  let i 0
+  let j 1
+  ifelse (flock-id < ceiling tot-flocks / 2)[
+    set i ((ceiling tot-flocks / 2) - flock-id)          ;; where to move in the top half of the circle 
+  ]
+  [
+    set i (flock-id + 1 - (ceiling tot-flocks / 2))      ;; where to move in the bottom half of the circle
+    set j -1
+  ]
+  ask my-destination [
+    set to-xpos originX + j * radius-aux * cos (i * theta)
+    set to-ypos originY + j * radius-aux * sin (i * theta)
+    set xcor to-xpos
+    set ycor to-ypos
+    set dest-arrived false
+    set color red
+    set hidden? true
+  ]
+  face my-destination
+  set new-heading heading
+  set arrived false
+  set reached-vn 0  
+  set free-move false
+end
+
+to shrinking-circle 
+  let cx 0
+  let cy 0
+  let deltaC 0
+  let radius-aux 0
+  ask my-token[
+    set cx item 1 task-data               ;;  x coordinates of the initiator of the message
+    set cy item 2 task-data               ;;  y coordinates of the initiator of the message
+    set radius-aux item 3 task-data       ;;  initial radius of the circle 
+    set deltaC item 4 task-data           ;;  the value to reduce from the original circle
+  ]
+  set radius-aux (radius-aux - deltaC)
+  let theta 2 * 180 /  tot-flocks
+  let i 0
+  let j 1
+  ifelse (flock-id < ceiling tot-flocks / 2)[  set i ((ceiling tot-flocks / 2) - flock-id)  ]   
+  [
+    set i (flock-id + 1 - (ceiling tot-flocks / 2))
+    set j -1
+  ]
+  ask my-destination [
+    set to-xpos originX + j * radius-aux * cos (i * theta)
+    set to-ypos originY + j * radius-aux * sin (i * theta)
+    set xcor to-xpos
+    set ycor to-ypos
+    set dest-arrived false
+    set color red
+    set hidden? true
+  ]
+  face my-destination
+  set new-heading heading
+  set arrived false
+  set reached-vn 0  
+  set free-move false
+end
+
+
+to forming-rectangle 
+  let cx 0
+  let cy 0
+  let delta-aux 0
+  let radius-aux 0
+  ask my-token[
+    set cx item 1 task-data               ;;  x of center of the gravity of the flocks
+    set cy item 2 task-data               ;;  y coordinates of the initiator of the message
+    set radius-aux item 3 task-data              ;;  target x coordinates of the initiator of the message
+    set delta-aux item 4 task-data
+  ]
+  let x0  cx - PI / 2 * radius-aux                  ;; here is the transformation of a circle into a two lines (length of a rectangle)
+  let y0  cy + delta-aux                            ;; (x0, y0) (x1, y1)  are the coordinates of the rectangle
+  let x1  cx + PI / 2 * radius-aux
+  let y1  cy - delta-aux
+  let step (2 /  tot-flocks)                         ;; this is a parametric line segment(p1, p2) defined as ap1 + (1-a)p2    ;step replace (a)
+  let halfDelta delta-aux / 2                        ;; this will allow us to compute the distance from the center of the circle to the line of the rectangle
+  let flockid [flock-id] of self
+  let nb (ceiling tot-flocks / 2)
+  let p ((flockid mod nb) * step)
+  ask my-destination[
+    set xcor (1 - p) * x0 + p * x1
+    set to-xpos xcor
+    ifelse (flockid < nb) [                        ;; traverse all the VN to give them their new position
+      set ycor y0
+      set to-ypos y0 - halfDelta
+    ]
+    [
+      set ycor y1
+      set to-ypos y1 + halfDelta
+    ]
+    set dest-arrived false
+    set status 0
+    set color red
+    set hidden? true
+  ]
+  set arrived false
+  set reached-vn 0
+  face my-destination
+  set new-heading heading
+  set free-move false
+
+end
+
+to forming-line-old 
+  let cx 0
+  let cy 0
+  let delta-aux 0
+  let radius-aux 0
+  ask my-token[
+    set cx item 1 task-data               ;;  x of center of the gravity of the flocks
+    set cy item 2 task-data               ;;  y coordinates of the initiator of the message
+    set radius-aux item 3 task-data              ;;  target x coordinates of the initiator of the message
+    set delta-aux item 4 task-data
+  ]
+  let x0  cx - (0.6 * PI * radius-aux)               ;; here is the transformation of a circle into a two lines (length of a rectangle)
+  let y0  cy                                 ;; (x0, y0) (x1, y0) are the coordinates extremity of the rectangle
+  let x1  cx + (0.6 * PI * radius-aux)
+  let step (1 /  (tot-flocks - 1))                         ;; this is a parametric line segment(p1, p2) defined as ap1 + (1-a)p2    ;step replace (a)
+  let flockid [flock-id] of self
+  let p (flockid * step)
+  ask my-destination[
+    set xcor (1 - p) * x0 + p * x1
+    set ycor y0
+    set to-xpos xcor
+    set to-ypos y0
+    set dest-arrived false
+    set status 0
+    set color red
+    set hidden? true
+  ]
+  set arrived false
+  set reached-vn 0
+  face my-destination
+  set new-heading heading
+  set free-move false
+end
+
+to forming-line 
+  let cx 0                                       ;;  x of center of the gravity of the flocks
+  let cy 0                                       ;;  y coordinates of the initiator of the message
+  let target-x 0                                 ;;  x coord of the location to move to
+  let target-y 0                                 ;;  y coord of the location to move to
+  let radius-aux 0                               ;;  radius of the initial circle  will be the length of the line
+  ask my-token[
+    set cx item 1 task-data               
+    set cy item 2 task-data               
+    set radius-aux item 3 task-data              
+    set target-x item 4 task-data              
+    set target-y item 5 task-data
+  ]
+  let teta (computeheading cx cy target-x target-y) + 90
+;  show( word " let us be in line from (" cx " , " cy ") to (" target-x " , " target-y "), teta = " teta)
+  let x0  cx - (1.1 * cos(teta) * radius-aux)               ;; here is the starting coord of the line
+  let y0  cy - (1.1 * sin(teta) * radius-aux)               ;; (x0, y0) (x1, y1) are the coordinates extremity of the line
+  let x1  cx + (1.1 * cos(teta) * radius-aux)
+  let y1  cy + (1.1 * sin(teta) * radius-aux)
+  ifelse (x0 < min-pxcor )[
+    let dist 1 - x0
+    set x0 1
+    set x1 x1 + dist
+  ]
+  [  
+    if (x1 > max-pxcor )[
+      let dist x1 - max-pxcor
+      set x0 (x0 - dist - 1)
+      set x1 (max-pxcor - 1)
+    ]
+  ] 
+  ifelse (y0 < min-pycor )[
+    let dist 1 - y0
+    set y0 1
+    set y1 y1 + dist
+  ]
+  [  
+    if (y1 > max-pycor )[
+      let dist y1 - max-pycor
+      set y0 (y0 - dist - 1)
+      set y1 (max-pycor - 1)
+    ]
+  ]
+  let step (1 /  (tot-flocks - 1))                   ;; this is a parametric line segment(p1, p2) defined as ap1 + (1-a)p2    flockid*step replace (a)
+  let flockid [flock-id] of self
+  let p (flockid * step)
+  ask my-destination[
+    set xcor (1 - p) * x0 + p * x1
+    set ycor (1 - p) * y0 + p * y1
+    set to-xpos xcor
+    set to-ypos ycor
+    set dest-arrived false
+    set status 0
+    set color red
+    set hidden? true
+  ]
+  set arrived false
+  set reached-vn 0
+  face my-destination
+  set new-heading heading
+  set free-move false
+end
+
+to update-radius            ; update the radius to  the circle can fit all the agents
+  let theta 2 * 180 / tot-flocks                 ;; center is originX, originY
+  let distance-between-agent radius * theta * PI / 180
+  ifelse ranges <  distance-between-agent [
+    set ranges distance-between-agent * 1.2
+    compute-locale
+  ]
+  [
+    ifelse (distance-between-agent < 0.5 * ranges) [][]
+  ]
+  
+end
+
+;; this procedure is triggered by the observer to position each VN in its place in the circle
+to init-circle                                   ;; this is the initial circle shape it has a slight difference with the circle-shape (shown below)
+  let theta 2 * 180 / tot-flocks                 ;; center is originX, originY
+  let halfTot ceiling tot-flocks / 2
+  let i halfTot
+  let j 1
+  let distance-between-agent radius * theta * PI / 180
+  if ranges <  distance-between-agent [
+    set ranges distance-between-agent * 1.2
+    compute-locale
+  ]
+  foreach sort-on [who] destinations [
+    the-destination -> ask the-destination [
+      ifelse i >= 0 [
+          set to-xpos originX + radius * cos (i * theta)
+        set to-ypos originY + radius * sin (i * theta)
+        set dest-arrived false
+        set i i - 1
+      ]
+      [
+        set to-xpos originX - radius * cos (j * theta)
+        set to-ypos originY - radius * sin (j * theta)
+        set dest-arrived false
+        set j j + 1
+      ]
+    ]
+  ]
+end
+
+
+to collaborate-obstacle-ovoidance
+  
+end
+

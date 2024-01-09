@@ -1,0 +1,45 @@
+
+
+to start-formation-deviation-process
+  let received-heading 0                                 ;;  y coord of the location to move to
+  let nbdev 0
+  ask my-token[
+    set received-heading item 1 task-data               
+    set nbdev item 2 task-data               
+  ]
+  set heading received-heading
+  set nb-deviation nbdev
+  set solving-rigide-formation false
+  forward speed 
+  show( word " heading received to maintain the regide formation") 
+ 
+end
+
+to end-formation-deviation-process
+  set solving-rigide-formation true
+  set nb-deviation 0 
+end
+
+
+to broadcast-start-deviation                    ;; in regide-formation
+  let task-content[]
+  set color black
+  set nb-deviation 1
+  set solving-rigide-formation false
+  set nb-messages 0
+  set task-content insert-item 0  task-content 9                                  ;;  to all    
+  set task-content insert-item 1  task-content heading                                  ;;  sending the heading to all
+  set task-content insert-item 2  task-content nb-deviation
+  set task-content insert-item 3  task-content xcor                                  ;;  sending the x coordinates to all
+  set task-content insert-item 4  task-content ycor                                  ;;  sending the y coordinates to all
+  broadcast-token (word " I am sending my heading as the formation is rigide: " heading )  task-content
+end
+
+to broadcast-endof-deviation                    ;; in regide-formation
+  let task-content[]
+  set solving-rigide-formation true
+  set color blue
+  set nb-messages 0
+  set task-content insert-item 0  task-content 10                                  ;;  to all    
+  broadcast-token (word " end of deviation of the regide formation: ")  task-content
+end

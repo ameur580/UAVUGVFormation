@@ -1,0 +1,102 @@
+to flock-reaching-destination                         ;; a robot is checking how it reached a VN depending on the VN status as defined above
+  set arrived true
+  let reached-destination 3
+  ask my-destination [
+    ifelse status = 1 [
+      set color green         ;; target colored green
+      set assigned-flock myself
+      set status 2
+      set reached-destination 1   ;; on going
+      set heading computeHeading xcor ycor to-xpos to-ypos
+      let dest-heading heading
+      ask assigned-flock [ set heading dest-heading ]
+    ]
+    [
+      if status = 2 [
+        set color yellow         ;; target colored yellow  final goal
+        set assigned-flock myself
+        set reached-destination 2   ;; going together with the vn
+        set heading computeHeading xcor ycor to-xpos to-ypos
+        let dest-heading heading
+        ask assigned-flock [ set heading dest-heading ]
+      ]
+    ]
+  ]
+  if reached-destination = 3  [    ;; test reached the vn goal
+    set nb-arrived nb-arrived + 1
+    set speed 0
+    ask my-destination [ set color green ]
+      set free-move true
+;    show (word nb-arrived "  ==> arrived to its final destination")
+  ]
+  set reached-vn reached-destination
+end
+
+
+to update-flock-movement                        ;; The robot is checking its the actual position and decides whether to continue moving or it reached a VN
+;  if (solving-rigide-formation = false) 
+;  [ 
+    ifelse (var-is-deviating) [
+      if ((abs(xcor - to-xdeviation) < 2) and ((ycor - to-ydeviation) < 2)) [ set var-is-deviating false ]
+    ]
+    [
+      let current-distance-to-destination distance my-destination
+      ifelse current-distance-to-destination > 1 [                                  ;;    continue moving
+        set heading computeHeading xcor ycor  [xcor] of my-destination [ycor] of my-destination
+        set speed sqrt (new-v-x ^ 2 + new-v-y ^ 2)
+        
+        ;; limit it to min-max range
+        set speed min (list current-distance-to-destination max-speed (max (list speed min-speed)))
+        ;; and now align it with the heading
+        set v-x speed * dx
+        set v-y speed * dy
+      ]
+      [                                                                           ;; reaching a VN
+        if reached-vn != 3  [ flock-reaching-destination]
+      ]
+    ]
+ ; ]
+end
+
+to vn-reaching-goal                                          ;; a VN is reaching the goal
+  set dest-arrived true                                      ;; updating its parameters accordingly
+  set nb-dest-arrived nb-dest-arrived + 1
+  set shape "circle"
+  set color blue
+  set status 3
+  set speed 0
+end
+
+;;================================================================================================================
+
+to update-destination-movement                                 ;; each VN is acting autonomeously
+  let flock-speed 0                                            ;; compute the next move (speed and heading) of the VN according to all robots
+  ask flocks [
+    if any? flocks with [speed > 0] [ set flock-speed speed ]    ;; pick any robot and take his speed if >0
+  ]
+  if flock-speed != 0 [ set speed flock-speed ]         ;; set the speed of the VN the taken speed
+  let b distancexy to-xpos to-ypos
+  ifelse b > 1 [
+    set heading computeHeading xcor ycor  to-xpos  to-ypos    ;; call to the method computeHeading to determine the new direction of the VN
+
+                                                             ;; check the status of the VN and act accordingly
+    ifelse status = 1 [
+      set speed speed * dest-coef-speed
+    ]
+    [
+      if status = 2 [
+        set speed [speed] of assigned-flock
+        set xcor [xcor] of assigned-flock
+        set ycor [ycor] of assigned-flock
+      ]
+    ]
+    set v-x speed * dx
+    set v-y speed * dy
+  ]
+  [
+    if dest-arrived = false [ vn-reaching-goal ]
+  ]
+
+end
+
+

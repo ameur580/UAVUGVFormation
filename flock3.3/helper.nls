@@ -1,0 +1,94 @@
+ ;; this appears a quicker way to emulate a cone-angle
+;; than the built-in in-cone reporter
+to-report in-field-of-view? [t1 t2 d dh]
+  let dist 0
+  ask t1 [ set dist distance t2 ]
+  report (dist < d) and (in-cone-angle? t1 t2 dh)
+end
+
+to-report between? [min-max x]
+  report x >= first min-max and x < last min-max
+end
+
+
+;; reports a heading 'normalised' to 0 to 360
+to-report norm-heading [x]
+  report x mod 360
+end
+
+;; uses the heading-difference reporter and towards to
+;; determine if t2 is in the forward-facing cone of angle dh of t1
+to-report in-cone-angle? [t1 t2 dh]
+  report heading-difference ([towards t2] of t1) [heading] of t1   <  dh
+end
+
+
+;; calculates a difference in two headings as the absolute
+;; angle between them, accounting for the 0-360 issue
+;; does not care about the order, i.e. the turn that would be required
+;; to change h1 to h2
+to-report heading-difference [h1 h2]
+  let h1-n norm-heading h1
+  let h2-n norm-heading h2
+  let dh abs (h1-n - h2-n)
+  if dh > 180 [
+    report 360 - dh
+  ]
+  report dh
+end
+
+
+
+;;the following method are used to compute atan2 as it is not provided by netlogo to determine the heading
+;; it is much more quicker than the one used in netlogo as we avoid circulating in the opposite side to reach the target
+;; Polynomial approximating arctangente on the range -1,1.
+;; Max error < 0.005 (or 0.29 degrees)
+to-report ApproxAtan[ z]
+
+    let n1  0.97239411
+    let n2  -0.19194795
+    report (n1 + n2 * z * z) * z
+end
+
+to-report ApproxAtan2[ y x]
+  let z  0.0
+  ifelse (x != 0.0) [
+    ifelse (abs(x) > abs(y)) [
+      set z  y / x
+      ifelse (x > 0.0) [ report ApproxAtan z  ]                      ;   // atan2(y,x) = atan(y/x) if x > 0
+      [
+        ifelse (y >= 0.0) [ report (ApproxAtan z) + PI ]             ;   // atan2(y,x) = atan(y/x) + PI if x < 0, y >= 0
+        [ report (ApproxAtan z) - PI  ]                              ;   // atan2(y,x) = atan(y/x) - PI if x < 0, y < 0
+      ]
+    ]
+    [
+      ; // Use property atan(y/x) = PI/2 - atan(x/y) if |y/x| > 1.
+      set z  x / y
+      ifelse (y > 0.0) [ report (-1) * (ApproxAtan z) + PI / 2 ]      ;     // atan2(y,x) = PI/2 - atan(x/y) if |y/x| > 1, y > 0
+      [   report (-1) * (ApproxAtan z) - PI / 2   ]                   ;     // atan2(y,x) = -PI/2 - atan(x/y) if |y/x| > 1, y < 0
+    ]
+  ]
+  [
+    ifelse (y > 0.0) [                    ;    // x = 0, y > 0
+      report PI / 2
+    ]
+    [
+      if (y < 0.0)  [                     ;    // x = 0, y < 0
+        report ((-1) * PI) / 2
+      ]
+    ]
+  ]
+  report 0.0                             ;     // x,y = 0. Could return NaN instead.
+end
+
+to-report computeHeading [x0 y0 x1 y1]
+  let rd PI / 180
+	let lat1  x0 * rd
+	let lat2  x1 * rd
+	let lng1  y0 * rd
+	let lng2  y1 * rd
+	report (ApproxAtan2 (cos(lat1) * sin(lat2) - sin(lat1) * cos(lat2) * cos(lng2 - lng1)) ( sin(lng2 - lng1) * cos(lat2)) ) / rd
+end
+
+
+

@@ -1,0 +1,209 @@
+  to build-Hpassage [ delta ]                ;; building a horizontal passage by coloring its patched in black
+  let half-delta delta / 2
+  let i 1
+  let xpos (goal-center-x - radius * PI * 0.4)
+  while [i < 20] [
+    ask patch (xpos - i + 9) (max-pycor - goal-center-y - half-delta - 3)[ set pcolor black ]
+    ask patch (xpos - i + 9) (max-pycor - goal-center-y + half-delta + 3)[ set pcolor black ]
+    set i i + 1
+  ]
+end
+
+
+to build-Vpassage [ delta ]               ;;;; building a vertical passage by coloring its patched in black
+  let half-delta delta / 2
+  let i 1
+  let ypos (originY - radius * PI * 0.3)
+  while [i < 30] [
+    ask patch  (max-pxcor - originX - half-delta - 10) (ypos - i)[ set pcolor black ]
+    ask patch  (max-pxcor - originX + half-delta - 10) (ypos - i)[ set pcolor black ]
+    set i i + 1
+  ]
+
+end
+
+  to build-slope-obstacle1            
+  let i 55
+  while [i < 90] [
+    ask patch ( i) (-0.5 * i + 100)[ set pcolor black ]
+    ask patch ( i) (-0.5 * (i + 1) + 100)[ set pcolor black ]
+    ask patch ( i) (-0.5 * (i + 2) + 100)[ set pcolor black ]
+    set i i + 1
+  ]
+end
+
+  to build-slope-obstacle2            
+  let b max-pycor - 50
+  let i 0
+  while [i < 20] [
+    ask patch ( 110 + i) (0.7 * i + b)[ set pcolor black ]
+    ask patch (110 + i) (0.7 * (i + 1) + b)[ set pcolor black ]
+    ask patch (110 + i) (0.7 * (i + 2) + b)[ set pcolor black ]
+    set i i + 1
+  ]
+end
+
+
+
+to reply-for-help
+  let task-content[]
+  set color black
+  set nb-messages 0
+  set task-content insert-item 0  task-content 9                                  ;;  private message    
+  set task-content insert-item 1  task-content [task-initiator] of my-token       ;;  destination agent
+  set task-content insert-item 2  task-content 9                                  ;;  reponds to help
+  set task-content insert-item 3  task-content xcor                               ;; this is my location xjfdf
+  set task-content insert-item 4  task-content ycor
+  set task-content insert-item 5  task-content x-init                               ;; this is my initial/starting location x and y
+  set task-content insert-item 6  task-content y-init
+  broadcast-token (word " I am sending my x, y: " xcor " - " ycor )  task-content
+end
+
+
+to-report is-obstacling
+  let p-obs patch-ahead 4
+  if ([ pcolor ] of (p-obs) != white) [ 
+    set var-is-deviating true
+    find-obstacle-slope p-obs
+    report true
+  ]
+  set p-obs patch-ahead 3
+  if ([ pcolor ] of (p-obs) != white) [ 
+    set var-is-deviating true
+    find-obstacle-slope p-obs
+    report true
+  ]
+  set p-obs patch-ahead 2
+  if ([ pcolor ] of (p-obs) != white) [ 
+    set var-is-deviating true
+    find-obstacle-slope p-obs
+    report true
+  ]
+  if (var-is-deviating = true)  [
+    set var-is-deviating false
+    if (solving-rigide-formation = false and free-move = false)[
+      broadcast-endof-deviation
+    ]
+  ]
+  report false
+end
+
+
+to-report hamper-at[x]
+  let y (-1 * x)
+  let barrier (patch-set patch-at x -1 patch-at x 0 patch-at x 1 )
+  set barrier  (patch-set barrier patch-at y -1 patch-at y 0 patch-at y 1 )
+  let target  (one-of barrier with [pcolor != white]) 
+  if (target != nobody) [report true]                            
+  report false
+end
+
+to-report heading-orientation
+  
+  if ((hamper-at 4)) [ report true ]                
+  if ((hamper-at 3)) [ report true ]                
+  if ((hamper-at 2)) [                              
+    set heading heading ;- 6  
+    report true 
+  ]
+  if (hamper-at 1) [ 
+    set heading heading ;- 10 
+    report true 
+  ]
+  report false
+end
+
+to-report still-deviating
+    
+  if (var-is-deviating = false) [  report  is-obstacling ] 
+  if heading-orientation  [report true]  
+  set color blue 
+  set var-is-deviating false
+  report false 
+end
+
+to-report is-colliding
+  set collide-with flocks in-cone 2 120
+  if (count collide-with  < 2) [report false ]
+  set nb-collision nb-collision + 1
+  set orientation  (-1 * orientation)
+  if nb-collision > 5 [
+    set nb-collision 0
+    set heading heading + random 60
+    forward speed
+  ]
+  report true
+end
+
+to find-obstacle-slope[p]
+  let envp p
+  ask p [set envp neighbors with ([pcolor != white])] 
+  ifelse envp = nobody [set heading heading + 45 ]
+  [
+    left-side-process 0 p
+    right-side-process 0 p
+    compute-heading-deviation
+    if (elastic-formation = false and free-move = false)[
+      broadcast-start-deviation                        ;; brodcast that the formation is rigide and I am facing an obstacle
+    ]
+  ]
+end
+
+
+to compute-heading-deviation
+    let temp-heading computeHeading [pxcor] of start-slope-obs [pycor] of start-slope-obs [pxcor] of end-slope-obs [pycor] of end-slope-obs
+    ifelse (180 - abs(temp-heading - heading) > 10) [ 
+      ifelse (abs(temp-heading - heading) > abs(temp-heading + 180 - heading)) [ set heading temp-heading + 180 ] 
+        [  set heading temp-heading ]
+    ]
+    [  set heading temp-heading ]  
+end
+
+to left-side-process [ i p]
+  ifelse i = 5 [ set start-slope-obs p ]
+  [
+    let envp p
+    ask p [set envp neighbors] 
+    let neigh-p one-of envp with ([pcolor != white]) with ([pxcor < [pxcor] of p])  with ([pycor < [pycor] of p]) 
+    ifelse neigh-p = nobody [
+      set neigh-p one-of envp with ([pcolor != white]) with ([pxcor < [pxcor] of p])  with ([pycor > [pycor] of p]) 
+      ifelse neigh-p = nobody [
+        set neigh-p one-of envp with ([pcolor != white]) with ([pxcor < [pxcor] of p])  with ([pycor = [pycor] of p]) 
+        ifelse neigh-p = nobody [
+          set neigh-p one-of envp with ([pcolor != white]) with ([pxcor = [pxcor] of p])  with ([pycor < [pycor] of p]) 
+          ifelse neigh-p = nobody [set start-slope-obs p ]
+          [left-side-process  (i + 1) neigh-p]
+        ]
+        [ left-side-process (i + 1) neigh-p ]
+      ]
+      [ left-side-process (i + 1) neigh-p ]
+    ]
+    [ left-side-process (i + 1) neigh-p ]
+  ]
+end
+
+to right-side-process [ i p]
+  ifelse i = 5 [ set end-slope-obs p ]
+  [
+    let envp p
+    ask p [set envp neighbors] 
+    let neigh-p one-of envp with ([pcolor != white]) with ([pxcor > [pxcor] of p])  with ([pycor < [pycor] of p]) 
+    ifelse neigh-p = nobody [
+      set neigh-p one-of envp with ([pcolor != white]) with ([pxcor > [pxcor] of p])  with ([pycor = [pycor] of p]) 
+      ifelse neigh-p = nobody [
+        set neigh-p one-of envp with ([pcolor != white]) with ([pxcor > [pxcor] of p])  with ([pycor > [pycor] of p]) 
+        ifelse neigh-p = nobody [
+          set neigh-p one-of envp with ([pcolor != white]) with ([pxcor = [pxcor] of p])  with ([pycor > [pycor] of p]) 
+          ifelse neigh-p = nobody [set end-slope-obs p ]
+          [right-side-process  (i + 1) neigh-p]
+        ]
+        [ right-side-process (i + 1) neigh-p ]
+      ]
+      [ right-side-process (i + 1) neigh-p ]
+    ]
+    [ right-side-process (i + 1) neigh-p ]
+  ]
+
+end
+
+
