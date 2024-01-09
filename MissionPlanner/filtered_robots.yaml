@@ -1,0 +1,57 @@
+tasks with assigned UGVs: &id001
+- gotoTarget
+- takePhoto
+- sendPhoto
+- gotoTarget
+filtered_ugvs:
+- id: E1
+  name: e-puck
+  uri: null
+  type: differential_drive
+  model: e-puck
+  initialPosition: (10.0, 20.0, 0.0)
+  capabilities:
+  - infrared
+  - proximity_sensors
+  - wheel_encoders
+  - camera
+  - Bluetooth
+  - wifi
+  power: null
+  battery_type: rechargeable
+  battery_capacity: 1000
+  subtasks: *id001
+- id: E2
+  name: e-puck
+  uri: null
+  type: differential_drive
+  model: e-puck
+  initialPosition: (-5.0, 15.0, 0.0)
+  capabilities:
+  - infrared
+  - proximity_sensors
+  - wheel_encoders
+  - camera
+  - Bluetooth
+  - wifi
+  power: null
+  battery_type: rechargeable
+  battery_capacity: 1000
+  subtasks: *id001
+- id: E3
+  name: e-puck
+  uri: null
+  type: differential_drive
+  model: e-puck
+  initialPosition: (1.0, 10.0, 0.0)
+  capabilities:
+  - infrared
+  - proximity_sensors
+  - wheel_encoders
+  - camera
+  - Bluetooth
+  - wifi
+  power: null
+  battery_type: rechargeable
+  battery_capacity: 1000
+  subtasks: *id001

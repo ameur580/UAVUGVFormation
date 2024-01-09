@@ -1,0 +1,62 @@
+mission:
+  id: mission001
+  name: CheckBase
+  description: Check if the location is adequate to install a base
+  robotsInitialPositions:
+    - (10.0, 20.0, 0.0)
+    - (-5.0, 15.0, 0.0)
+    - (1.0, 10.0, 0.0)
+  tasks:
+    - id: 001
+      name: exploring the location
+      description: launching the formation departure
+      priority: high
+      prereq_tasks: []
+      subtasks:
+        - id: 00110
+          name: gotoTarget
+          description: going to the target position
+          target: (30.0, 40.0, 0.0)
+        - id: 00120
+          name: takePhoto
+          description: take photo at that location
+        - id: 00130
+          name: sendPhoto
+          description: send the taken photo to the server
+        - id: 00140
+          name: gotoTarget
+          description: Return back to the initial base
+          target: (10.0, 10.0, 0.0)
+      robot_type: UGV
+      nb_UGV: 3
+      nb_UAV: 0
+      capabilities:
+        - 'camera'
+        - 'wifi'
+      resources: []
+      collaboration_type: ground
+      status: not started
+
+    - id: 002
+      name: DiscoverNewBase
+      description: discovering whether the location is suitable to be a base
+      priority: medium
+      prereq_tasks:
+        - 001
+      subtasks:
+        - id: 00220
+          name: gotoTarget
+          description: Set up to deploy the base
+          target: (20.0, 20.0, 0.0)
+      robot_type: UGV
+      nb_G_robot: 2
+      nb_A_robot: 0
+      capabilities:
+        - 'camera'
+        - 'wifi'
+        - 'infrared'
+      resources: []
+      collaboration_type: ground
+      status: 'not_started'
+
+

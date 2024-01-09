@@ -1,0 +1,53 @@
+UGV:
+  - id: "E1"
+    name: "e-puck"
+    uri:
+    type: "UGV"
+    model: "e-puck"
+    initialPosition:
+    type: differential_drive
+    capabilities:
+      - 'infrared'
+      - 'proximity_sensors'
+      - 'wheel_encoders'
+      - 'camera'
+      - 'Bluetooth'
+      - 'wifi'
+    power:
+    battery_type: rechargeable
+    battery_capacity: 1000
+  - id: "E2"
+    name: "e-puck"
+    uri:
+    type: "UGV"
+    model: "e-puck"
+    initialPosition:
+    type: differential_drive
+    capabilities:
+      - 'infrared'
+      - 'proximity_sensors'
+      - 'wheel_encoders'
+      - 'camera'
+      - 'Bluetooth'
+      - 'wifi'
+    power:
+    battery_type: rechargeable
+    battery_capacity: 1000
+  - id: "E3"
+    name: "e-puck"
+    uri:
+    type: "UGV"
+    model: "e-puck"
+    initialPosition:
+    type: differential_drive
+    capabilities:
+      - 'infrared'
+      - 'proximity_sensors'
+      - 'wheel_encoders'
+      - 'camera'
+      - 'Bluetooth'
+      - 'wifi'
+    power:
+    battery_type: rechargeable
+    battery_capacity: 1000
+
