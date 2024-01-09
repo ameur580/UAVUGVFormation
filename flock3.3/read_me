@@ -1,0 +1,2 @@
+this directory contains files about formation of a flock with obstacle avoidance and elastic formation. The application runs with netlogo 6.2/6.2.2 
+the entry point is the file flockTestV3.3
