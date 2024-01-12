@@ -1,0 +1,4 @@
+int64 step
+bool ahead
+bool left
+bool right

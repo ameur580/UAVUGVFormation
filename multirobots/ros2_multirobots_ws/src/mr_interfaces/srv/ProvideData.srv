@@ -1,0 +1,5 @@
+string id
+int64 step
+float64 data
+---
+bool ok

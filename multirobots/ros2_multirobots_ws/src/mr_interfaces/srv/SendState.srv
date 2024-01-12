@@ -1,0 +1,5 @@
+string id
+int64 step
+mr_interfaces/State state
+---
+bool ok
